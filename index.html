@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Skirk Combo Trainer</title>
+  <meta name="description" content="Precision combo animation cancel & attack spam timing trainer for Skirk" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel='stylesheet' href='styles.css' />
+</head>
+<body>
+  <div class="app-wrap">
+
+    <!-- HEADER -->
+    <header class="header-bar">
+      <div class="brand-group">
+        <div class="brand-icon">S</div>
+        <div class="brand-text">Skirk Combo Trainer</div>
+      </div>
+      <div class="header-controls">
+        <button class="btn-icon" id="btn-theme" title="Toggle Light/Dark Theme">◐</button>
+        <button class="btn-icon" id="btn-audio" title="Toggle Sound">🔊</button>
+        <button class="btn-icon" id="btn-stats-top" title="View Statistics">📊</button>
+      </div>
+    </header>
+
+    <!-- PROMINENT CPS HERO WIDGET -->
+    <div class="hero-cps-card">
+      <div class="cps-left">
+        <span class="cps-badge-label">Spam Frequency Meter</span>
+        <span class="cps-subtext">Spam Attack (L-Click / Space) until cancel window opens</span>
+      </div>
+
+      <div class="cps-center-val-wrap">
+        <div class="cps-main-number" id="cps-num">0.0</div>
+        <div class="cps-unit">CPS</div>
+      </div>
+
+      <div class="cps-bar-container">
+        <div class="cps-bar-bg">
+          <div class="cps-bar-fill" id="cps-fill"></div>
+        </div>
+        <div class="cps-stats-row">
+          <span>PEAK: <b id="cps-peak" style="color:var(--ocean-blue)">0.0</b></span>
+          <span id="cps-status">IDLE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMBO SELECTION -->
+    <div class="combo-tabs" id="combo-tabs">
+      <button class="combo-btn active" data-combo="n2d">N2D (Normal 2 → Dash)</button>
+      <button class="combo-btn" data-combo="n2cd">N2CD (N2 → Charge → Dash)</button>
+      <button class="combo-btn" data-combo="n5d">N5D (5-Hit String → Dash)</button>
+      <button class="combo-btn" data-combo="n3w">N3W (Normal 3 → Walk)</button>
+    </div>
+
+    <!-- ACTIVE COMBO FLOW -->
+    <div class="combo-flow-bar" id="combo-flow">
+      <!-- Generated via JS -->
+    </div>
+
+    <!-- TIMELINE CANVAS STAGE -->
+    <div class="timeline-container">
+      <div class="stage-canvas-box" id="stage-box" tabindex="0">
+        <div class="lane-tag lane-tag-atk">ATTACK (SPAM)</div>
+        <div class="lane-tag lane-tag-dash" id="lower-lane-tag">DASH CANCEL</div>
+
+        <div id="timeline-elements"></div>
+        <div class="playhead-line" id="playhead"></div>
+        <div class="playhead-badge" id="playhead-badge">NOW</div>
+
+        <div class="stage-msg-overlay" id="stage-overlay" style="display:none;">
+          <div class="stage-msg-box" id="stage-msg-text">Click to Start / Spam Attack</div>
+        </div>
+      </div>
+
+      <div class="timeline-instructions">
+        Spam <b>Mouse Left / Space</b> during attack phase $\to$ Tap <b>Shift / Right Click</b> on the Dash window. Click above to focus.
+      </div>
+    </div>
+
+    <!-- MID DASHBOARD: COMBAT MECHANIC INFO, SPEEDOMETER, FEED -->
+    <div class="dashboard-grid">
+
+      <!-- Left Panel: Combat Guidance -->
+      <div class="dash-panel">
+        <div class="panel-header-title">Skirk Combat Mechanics</div>
+        <div class="combat-tip-text">
+          Like top-tier sword users, you <strong>spam Normal Attacks</strong> to buffer N1 & N2 with zero downtime, then <strong>Dash cancel</strong> immediately on N2's hitlag frame to skip recovery lag!
+        </div>
+        <div class="keybind-quick-list">
+          <div class="key-chip">ATK: L-Click / Space</div>
+          <div class="key-chip" id="dash-chip">DASH: Shift / R-Click</div>
+        </div>
+      </div>
+
+      <!-- Center: Speedometer Gauge -->
+      <div class="gauge-wrap">
+        <div class="gauge-stats-top">
+          <div>
+            <div class="g-stat-label">STREAK</div>
+            <div class="g-stat-val blue" id="streak-num">×0</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="g-stat-label">TOP SPEED</div>
+            <div class="g-stat-val" id="top-speed-num">0</div>
+          </div>
+        </div>
+
+        <svg id="gauge-svg" width="240" height="120" viewBox="0 0 300 150">
+          <path d="M 30 140 A 120 120 0 0 1 270 140" fill="none" stroke="var(--border-color)" stroke-width="12" stroke-linecap="round" />
+          <path id="gauge-fill" d="M 30 140 A 120 120 0 0 1 30 140" fill="none" stroke="var(--ocean-blue)" stroke-width="12" stroke-linecap="round" />
+          <line id="gauge-needle" x1="150" y1="140" x2="50" y2="140" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" />
+          <circle cx="150" cy="140" r="7" fill="var(--text-main)" />
+          <text id="gauge-text" x="150" y="120" text-anchor="middle" font-family="Oswald" font-size="28" font-weight="700" fill="var(--text-main)">0</text>
+          <text x="150" y="135" text-anchor="middle" font-family="Inter" font-size="9" font-weight="600" fill="var(--text-muted)">SPEED</text>
+        </svg>
+      </div>
+
+      <!-- Right: Recent Judgments Feed -->
+      <div class="feed-panel" id="recent-feed">
+        <div class="panel-header-title" style="margin-bottom: auto;">Judgment Feed</div>
+        <!-- Feed entries populated by JS -->
+      </div>
+
+    </div>
+
+    <!-- BOTTOM ACTIONS -->
+    <div class="bottom-bar">
+      <button class="btn-main-action start" id="btn-ride">Ride</button>
+      <button class="btn-square" id="btn-settings" title="Settings">⚙</button>
+      <button class="btn-square" id="btn-stats" title="Statistics">📊</button>
+    </div>
+
+  </div>
+
+  <!-- ─── SETTINGS MODAL ─── -->
+  <div class="modal-overlay" id="modal-settings" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-title-row">
+        <div class="modal-title">Trainer Settings</div>
+        <button class="modal-close-btn" id="modal-settings-close">&times;</button>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-row-label">Tempo / Speed</div>
+        <div class="modal-btn-group" id="tempo-opts">
+          <button class="modal-opt-btn" data-val="0.75">0.75×</button>
+          <button class="modal-opt-btn active" data-val="1.0">1.0×</button>
+          <button class="modal-opt-btn" data-val="1.25">1.25×</button>
+        </div>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-row-label">Difficulty Tolerance</div>
+        <div class="modal-btn-group" id="tol-opts">
+          <button class="modal-opt-btn" data-val="relaxed">Relaxed</button>
+          <button class="modal-opt-btn active" data-val="normal">Normal</button>
+          <button class="modal-opt-btn" data-val="strict">Strict</button>
+        </div>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-row-label">Theme Mode</div>
+        <div class="modal-btn-group" id="theme-modal-opts">
+          <button class="modal-opt-btn active" data-theme="dark">Black / Ocean</button>
+          <button class="modal-opt-btn" data-theme="light">White / Ocean</button>
+        </div>
+      </div>
+
+      <button class="modal-submit" id="modal-settings-done">Apply & Close</button>
+    </div>
+  </div>
+
+  <!-- ─── STATS MODAL ─── -->
+  <div class="modal-overlay" id="modal-stats" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-title-row">
+        <div class="modal-title">Session Performance</div>
+        <button class="modal-close-btn" id="modal-stats-close">&times;</button>
+      </div>
+
+      <table class="stat-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Total</th>
+            <th style="color:var(--color-perf)">Perf</th>
+            <th style="color:var(--color-good)">Good</th>
+            <th style="color:var(--color-early)">Early</th>
+            <th style="color:var(--color-late)">Late</th>
+            <th style="color:var(--color-miss)">Miss</th>
+          </tr>
+        </thead>
+        <tbody id="stat-tbody"></tbody>
+      </table>
+
+      <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; padding:4px 0;">
+        <div>Accuracy: <b id="stat-acc" style="color:var(--ocean-blue)">100%</b></div>
+        <div>Max Streak: <b id="stat-max-streak">0</b></div>
+        <div>Avg Error: <b id="stat-avg-err">0ms</b></div>
+      </div>
+
+      <button class="modal-submit" id="modal-stats-done">Close</button>
+    </div>
+  </div>
+
+  <!-- ─── JAVASCRIPT ENGINE ─── -->
+  <script src='app.js'></script>
+</body>
+</html>
